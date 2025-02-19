@@ -3,7 +3,7 @@ import type { Page } from "puppeteer-core";
 import { getS3Key, setData } from "./entites/s3";
 import { getCache, setCache } from "./entites/cache";
 import { normalize } from "./utils/normalize";
-import { hostDataSchema } from "./schemas/hostdata";
+import { HostData, hostDataSchema } from "./schemas/hostdata";
 import { push } from "./entites/sqs";
 import type { ScrapMessage } from "./schemas/scapMessage";
 import { publish } from "./entites/sns";
@@ -61,11 +61,7 @@ export async function exploreUrlsAndQueue(
       signSecret
     );
   }
-
-  const { explored, links: linkData } = (await getCache(
-    host,
-    hostDataSchema
-  )) || {
+  const defaultHostData: HostData = {
     count: links.length,
     explored: 0,
     links: links.map((link) => ({
@@ -74,8 +70,10 @@ export async function exploreUrlsAndQueue(
     })),
     scraped: false,
     signSecret,
+    callbackUrl,
   };
-
+  const { explored, links: linkData } =
+    (await getCache<HostData>(host, hostDataSchema)) || defaultHostData;
   const link = linkData.find((link) => link.url === url);
   if (!link || link.scraped) {
     return null;
@@ -126,8 +124,8 @@ export async function exploreUrlsAndQueue(
   );
 
   await Promise.all(operations);
-  const cache = await getCache(host, hostDataSchema);
-  if (cache.scraped) {
+  const cache = await getCache<HostData>(host, hostDataSchema);
+  if (cache?.scraped) {
     operations.push(
       publish<AiMessage>(process.env.EXPLORE_DONE_TOPIC_ARN || "", {
         host,

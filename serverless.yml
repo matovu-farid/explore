@@ -38,7 +38,6 @@ provider:
     EXPLORE_DONE_TOPIC_ARN: ${env:EXPLORE_DONE_TOPIC_ARN}
     WEBHOOK_TOPIC_ARN: ${env:WEBHOOK_TOPIC_ARN}
 
-    
   layers:
     - ${env:CHROMIUM_LAYER_ARN}
   iam:
@@ -57,6 +56,11 @@ provider:
             - s3:GetObject
             - s3:PutObject
           Resource: "arn:aws:s3:::scrappy-scrapped"
+        - Effect: Allow
+          Action:
+            - s3:GetObject
+            - s3:PutObject
+          Resource: "arn:aws:s3:::scrappy-scrapped/*"
 
 functions:
   explore:
