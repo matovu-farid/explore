@@ -1,9 +1,9 @@
 # "org" ensures this Service is used with the correct Serverless Framework Access Key.
 org: matovufarid
 # "app" enables Serverless Framework Dashboard features and sharing them with other Services.
-app: sls-scrap2
+app: explore
 # "service" is the name of this project. This will also be added to your AWS resource names.
-service: sls-scrap2
+service: explore
 
 package:
   individually: true

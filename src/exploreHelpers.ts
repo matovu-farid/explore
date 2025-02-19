@@ -22,7 +22,10 @@ async function getLinksForHost(
   url: string,
   passedLinks?: string[]
 ) {
-  const links = passedLinks || (await queryLinks(page)).map(normalize);
+  const links =
+    passedLinks && passedLinks.length > 0
+      ? passedLinks
+      : (await queryLinks(page)).map(normalize);
   const filteredLinks = Array.from(
     new Set([
       ...links.filter((link) => new URL(normalize(link)).host === host),
@@ -48,6 +51,7 @@ export async function exploreUrlsAndQueue(
   // Navigate the page to a URL
   await page.goto(parsedURL.toString());
   const links = await getLinksForHost(page, host, url, passedLinks);
+  console.log({ links });
   if (!passedLinks || passedLinks.length === 0) {
     await publishWebhook(
       callbackUrl,
