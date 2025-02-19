@@ -117,13 +117,14 @@ export async function exploreUrlsAndQueue(
       async () => {
         const { links, explored } =
           (await getCache<HostData>(host, hostDataSchema)) || defaultHostData;
-          const link = linkData.find((link) => link.url === url);
-          if (!link || link?.scraped) {
-           return null
-          }
+        const link = linkData.find((link) => link.url === url);
+        if (!link || link?.scraped) {
+          return null;
+        }
+        const exploredCount = Math.min(explored + 1, linkData.length);
         return {
           count: links.length,
-          explored: explored + 1,
+          explored: exploredCount,
           links: links.map((link) => {
             if (link.url === url) {
               return {
@@ -133,7 +134,7 @@ export async function exploreUrlsAndQueue(
             }
             return link;
           }),
-          scraped: explored + 1 === links.length,
+          scraped: exploredCount === links.length,
           callbackUrl,
           signSecret,
         };
