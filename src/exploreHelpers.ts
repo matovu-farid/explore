@@ -22,16 +22,18 @@ async function getLinksForHost(
   url: string,
   passedLinks?: string[]
 ) {
-  const links =
-    passedLinks && passedLinks.length > 0
-      ? passedLinks
-      : (await queryLinks(page)).map(normalize);
+  let links = passedLinks;
+  if (!links || links.length == 0) {
+    links = (await queryLinks(page)).map(normalize);
+  }
+  console.log({ links });
   const filteredLinks = Array.from(
     new Set([
-      ...links.filter((link) => new URL(normalize(link)).host === host),
+      ...links.filter((link) => new URL(link).host === host),
       url,
     ])
   );
+  console.log({ filteredLinks });
   return filteredLinks;
 }
 
