@@ -117,6 +117,10 @@ export async function exploreUrlsAndQueue(
       async () => {
         const { links, explored } =
           (await getCache<HostData>(host, hostDataSchema)) || defaultHostData;
+          const link = linkData.find((link) => link.url === url);
+          if (!link || link?.scraped) {
+           return null
+          }
         return {
           count: links.length,
           explored: explored + 1,

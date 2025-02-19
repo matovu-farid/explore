@@ -23,7 +23,7 @@ export const getCache = async <T>(key: string, schema: z.ZodSchema<T>) => {
 
 export const syncSetCache = async <T>(
   key: string,
-  getValue: () => Promise<T>,
+  getValue: () => Promise<T |null> ,
   syncKey: string,
   lease: number = 5000
 ) => {
@@ -34,6 +34,11 @@ export const syncSetCache = async <T>(
   });
   if (await lock.acquire()) {
     const value = await getValue();
+    if (!value) {
+      await lock.release();
+      return;
+    }
+
     await setCache(key, value);
     await lock.release();
   } else {
