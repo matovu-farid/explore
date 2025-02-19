@@ -32,6 +32,9 @@ async function getLinksForHost(
   return filteredLinks;
 }
 
+async function getLinkData(host: string, defaultHostData: HostData) {
+  return (await getCache<HostData>(host, hostDataSchema)) || defaultHostData;
+}
 export async function exploreUrlsAndQueue(
   passedUrl: string,
   page: Page,
@@ -72,8 +75,10 @@ export async function exploreUrlsAndQueue(
     signSecret,
     callbackUrl,
   };
-  const { explored, links: linkData } =
-    (await getCache<HostData>(host, hostDataSchema)) || defaultHostData;
+  const { explored, links: linkData } = await getLinkData(
+    host,
+    defaultHostData
+  );
   const link = linkData.find((link) => link.url === url);
   if (!link || link.scraped) {
     return null;
@@ -109,22 +114,26 @@ export async function exploreUrlsAndQueue(
   operations.push(
     syncSetCache<HostData>(
       host,
-      {
-        count: linkData.length,
-        explored: explored + 1,
-        links: linkData.map((link) => {
-        if (link.url === url) {
-          return {
-            ...link,
-            scraped: true,
-          };
-        }
-        return link;
-      }),
-      scraped: explored + 1 === linkData.length,
-      callbackUrl,
-      signSecret,
-    },
+      async () => {
+        const { links } =
+          (await getCache<HostData>(host, hostDataSchema)) || defaultHostData;
+        return {
+          count: links.length,
+          explored: explored + 1,
+          links: links.map((link) => {
+            if (link.url === url) {
+              return {
+                ...link,
+                scraped: true,
+              };
+            }
+            return link;
+          }),
+          scraped: explored + 1 === links.length,
+          callbackUrl,
+          signSecret,
+        };
+      },
       "host-data"
     )
   );

@@ -23,7 +23,7 @@ export const getCache = async <T>(key: string, schema: z.ZodSchema<T>) => {
 
 export const syncSetCache = async <T>(
   key: string,
-  value: T,
+  getValue: () => Promise<T>,
   syncKey: string,
   lease: number = 5000
 ) => {
@@ -33,11 +33,12 @@ export const syncSetCache = async <T>(
     redis: Redis.fromEnv(),
   });
   if (await lock.acquire()) {
+    const value = await getValue();
     await setCache(key, value);
     await lock.release();
   } else {
     await new Promise((resolve) => setTimeout(resolve, 100));
-    await syncSetCache(key, value, syncKey, lease);
+    await syncSetCache(key, getValue, syncKey, lease);
   }
 };
 
