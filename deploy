@@ -1,0 +1,26 @@
+##! /bin/bash
+
+package_name=sls-scrap2-explore
+sls package
+unzip .serverless/build/${package_name}.zip -d .serverless/build/${package_name}
+# make all js files mjs
+find .serverless/build/${package_name} -type f -name "*.js" -exec sh -c 'mv "$0" "${0%.js}.mjs"' {} \;
+
+# remove existing zip
+rm -rf .serverless/build/${package_name}.zip
+
+
+# zip all files
+zip -r .serverless/build/${package_name}.zip .serverless/build/${package_name}
+
+rm -rf .serverless/build/${package_name}
+
+sha=$(openssl dgst -sha256 -binary .serverless/build/${package_name}.zip | openssl enc -base64)
+
+# update sha in serverless.state.json
+jq '.functions.ExploreLambdaFunction.CodeSha256 = "'${sha}'"' .serverless/serverless-state.json > .serverless/serverless-state.json.tmp && mv .serverless/serverless-state.json.tmp .serverless/serverless-state.json
+
+sls deploy --package .serverless 
+
+
+

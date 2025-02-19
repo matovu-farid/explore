@@ -1,0 +1,28 @@
+# bash execute this file
+#! /bin/bash
+sls package
+unzip .serverless/build/sls-scrap-explore.zip -d .serverless/build/sls-scrap-explore
+mkdir nodemodules
+cp -r .serverless/build/sls-scrap-explore/node_modules nodemodules
+zip -r nodemodules.zip nodemodules
+aws s3api put-object --key nodemodules.zip --bucket explore-modules --body nodemodules.zip --cli-connect-timeout 2
+# bun upload.ts
+rm -rf nodemodules.zip
+rm -rf nodemodules
+aws lambda publish-layer-version --layer-name explore-nodemodules --cli-read-timeout 2 --compatible-runtimes nodejs22.x --no-paginate --content  S3Bucket=explore-modules,S3Key=nodemodules.zip | jq '.none'
+nodemods=$(aws lambda list-layers | jq -r '.Layers[].LatestMatchingVersion.LayerVersionArn' | grep explore-nodemodules)
+chromium=$(aws lambda list-layers | jq '.Layers[].LatestMatchingVersion.LayerVersionArn' | grep chromium-1)
+
+mkdir code
+cp .serverless/build/src/index.js code/
+
+zip -r code.zip code
+aws s3api put-object --key index.zip --bucket explore-code --body .serverless/build/sls-scrap-explore.zip --cli-connect-timeout 2
+
+aws lambda update-function-code --function-name scrapy-exploreUrl --s3-bucket explore-code --s3-key index.zip | jq '.none'
+
+rm -rf code.zip
+rm -rf code
+
+aws lambda update-function-configuration --no-paginate --cli-read-timeout 2 --function-name scrapy-exploreUrl \
+--layers $nodemods | jq '.none'
