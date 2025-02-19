@@ -115,7 +115,7 @@ export async function exploreUrlsAndQueue(
     syncSetCache<HostData>(
       host,
       async () => {
-        const { links } =
+        const { links, explored } =
           (await getCache<HostData>(host, hostDataSchema)) || defaultHostData;
         return {
           count: links.length,
