@@ -28,10 +28,7 @@ async function getLinksForHost(
   }
   console.log({ links });
   const filteredLinks = Array.from(
-    new Set([
-      ...links.filter((link) => new URL(link).host === host),
-      url,
-    ])
+    new Set([...links.filter((link) => new URL(link).host === host), url])
   );
   console.log({ filteredLinks });
   return filteredLinks;
