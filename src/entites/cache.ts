@@ -1,3 +1,4 @@
+import { Lock } from "@upstash/lock";
 import { Redis } from "@upstash/redis";
 import { z } from "zod";
 
@@ -18,6 +19,26 @@ export const getCache = async <T>(key: string, schema: z.ZodSchema<T>) => {
     return null;
   }
   return result.data;
+};
+
+export const syncSetCache = async <T>(
+  key: string,
+  value: T,
+  syncKey: string,
+  lease: number = 5000
+) => {
+  const lock = new Lock({
+    id: syncKey,
+    lease, // Hold the lock for 5 seconds
+    redis: Redis.fromEnv(),
+  });
+  if (await lock.acquire()) {
+    await setCache(key, value);
+    await lock.release();
+  } else {
+    await new Promise((resolve) => setTimeout(resolve, 100));
+    await syncSetCache(key, value, syncKey, lease);
+  }
 };
 
 export async function delCache(key: string) {

@@ -1,7 +1,7 @@
 import type { Page } from "puppeteer-core";
 
 import { getS3Key, setData } from "./entites/s3";
-import { getCache, setCache } from "./entites/cache";
+import { getCache, setCache, syncSetCache } from "./entites/cache";
 import { normalize } from "./utils/normalize";
 import { HostData, hostDataSchema } from "./schemas/hostdata";
 import { push } from "./entites/sqs";
@@ -107,10 +107,12 @@ export async function exploreUrlsAndQueue(
       );
     });
   operations.push(
-    setCache(host, {
-      count: linkData.length,
-      explored: explored + 1,
-      links: linkData.map((link) => {
+    syncSetCache<HostData>(
+      host,
+      {
+        count: linkData.length,
+        explored: explored + 1,
+        links: linkData.map((link) => {
         if (link.url === url) {
           return {
             ...link,
@@ -120,7 +122,11 @@ export async function exploreUrlsAndQueue(
         return link;
       }),
       scraped: explored + 1 === linkData.length,
-    })
+      callbackUrl,
+      signSecret,
+    },
+      "host-data"
+    )
   );
 
   await Promise.all(operations);
