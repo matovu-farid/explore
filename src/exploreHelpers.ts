@@ -26,11 +26,9 @@ async function getLinksForHost(
   if (!links || links.length == 0) {
     links = (await queryLinks(page)).map(normalize);
   }
-  console.log({ links });
   const filteredLinks = Array.from(
     new Set([...links.filter((link) => new URL(link).host === host), url])
   );
-  console.log({ filteredLinks });
   return filteredLinks;
 }
 
@@ -50,7 +48,6 @@ export async function exploreUrlsAndQueue(
   // Navigate the page to a URL
   await page.goto(parsedURL.toString());
   const links = await getLinksForHost(page, host, url, passedLinks);
-  console.log({ links });
   if (!passedLinks || passedLinks.length === 0) {
     await publishWebhook(
       callbackUrl,
