@@ -37,7 +37,7 @@ export const syncSetCache = async <T>(
     await setCache(key, value);
     await lock.release();
   } else {
-    await new Promise((resolve) => setTimeout(resolve, 100));
+    await new Promise((resolve) => setTimeout(resolve, 1000));
     await syncSetCache(key, getValue, syncKey, lease);
   }
 };
